@@ -8,6 +8,25 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "tableaux_LT.h"
+#include <unistd.h>
+
+
+void affiche_LT(tab_LT tab_lt )
+{
+    int i;
+    for (i=0; i< tab_lt->taille_T; i++)
+    {
+        printf("%c",tab_lt->T[i]);
+    }
+    printf("\n\n");
+    for (i=1; i<=tab_lt->taille_L;i++)
+    {
+        printf("%d %c\n", tab_lt->L[i], tab_lt->T[tab_lt->L[i]]);
+    }
+    
+}
+
+
 
 /**
  * cette fonction compte le nombre de caratectre du fichier
@@ -40,9 +59,14 @@ int count_number_lines(char* file)
     FILE *F;
     F=fopen(file, "r");
     int l=0;
+    char c;
     if (F)
     {
-        while(fgetc(F) != '\n') l++;
+        c = fgetc(F);
+        while(c != EOF) {
+            if(c == '\n') l++;
+            c = fgetc(F);
+        }
         return l;
         
     }
@@ -62,23 +86,28 @@ tab_LT file_to_tab(char* file)
     // creation d'un tableau de taille taille du fichier
     tab_LT lt = malloc(sizeof(struct tableaux_LT));
     lt->taille_T = count_file_size( file);
+    lt->taille_L = count_number_lines(file);
+    if(lt->taille_T <0 || lt->taille_L < 0) {
+        printf("Erreur lors de la lecture du fichier %s\n", file);
+        exit(1);
+    }
+
     lt->T = (char*)malloc(sizeof(char)*lt->taille_T);
     // creation d'un tableau de taille nombre de lignes du fichier
-    lt->taille_L = count_number_lines(file);
     lt->L = (int*)malloc(sizeof(int)*lt->taille_L);
     
     // Lecture du fichier
     FILE *F;
     F=fopen(file, "r");
     int c; // Compteur des chars du fichier
-    lt->L[1]=0;   // Nous avons opté de commencer par 1 dans les indices de L car
+    lt->L[1] = 0;   // Nous avons opté de commencer par 1 dans les indices de L car
                   // la numérotation des lignes commence à 1
     int l = 2; // Compteur des lignes du fichier
+    int nwline = 0;
     for (c=0; c<lt->taille_T; c++ /* :) */)
     {
         lt->T[c] = fgetc(F);
-        // nouvelle ligne
-        if(lt->T[c] == '\n')
+        if(nwline)
         {
             // on stock l'indice du premier carectere de la ligne qui est le ccarectere actuel
             // dans L
@@ -86,8 +115,17 @@ tab_LT file_to_tab(char* file)
             // on incremete l'indice de l 
             l++;
         }
+        // nouvelle ligne
+        if(lt->T[c] == '\n') nwline = 1;
+        else nwline = 0;
     }
     
     return lt;
 }
 
+
+int main(int argc, char* argv[])
+{
+    tab_LT lt = file_to_tab("test_files/pg31469.txt");
+    affiche_LT(lt);
+}
